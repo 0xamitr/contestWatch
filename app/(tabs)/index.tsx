@@ -6,13 +6,22 @@ import { ThemedView } from '@/components/ThemedView';
 import {
   registerBackgroundTaskAsync
 } from '@/hooks/backgroundTasts';
+import {
+  requestNotificationPermissions,
+  scheduleDailyMemoNotification
+} from '@/hooks/notifications';
 import { Image } from 'expo-image';
 import { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 
 export default function HomeScreen() {
   useEffect(()=>{
-    registerBackgroundTaskAsync()
+    const init = async() => {
+      const granted = await requestNotificationPermissions()
+      scheduleDailyMemoNotification()
+      registerBackgroundTaskAsync()
+    }
+    init()
   }, [])
   return (
     <ParallaxScrollView
