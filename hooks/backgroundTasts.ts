@@ -39,8 +39,13 @@ TaskManager.defineTask(TASK_NAME, async () => {
 
 
 export async function registerBackgroundTaskAsync() {
-    console.log("regitered")
-  return BackgroundTask.registerTaskAsync(TASK_NAME,{
-    minimumInterval: 60*15,
-  });
+  try {
+    console.log("registering background task");
+    await BackgroundTask.registerTaskAsync(TASK_NAME, {
+      minimumInterval: 60 * 15,
+    });
+    console.log("registered");
+  } catch (err) {
+    console.error("Failed to register background task", err);
+  }
 }

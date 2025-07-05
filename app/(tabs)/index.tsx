@@ -15,14 +15,24 @@ import { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 
 export default function HomeScreen() {
-  useEffect(()=>{
-    const init = async() => {
-      const granted = await requestNotificationPermissions()
-      await scheduleDailyMemoNotification()
-      await registerBackgroundTaskAsync()
-    }
-    init()
-  }, [])
+ useEffect(() => {
+  console.log("useEffect ran");
+
+  const init = async () => {
+    console.log("init started");
+
+    const granted = await requestNotificationPermissions();
+    console.log("permissions granted:", granted);
+
+    await scheduleDailyMemoNotification();
+    console.log("notification scheduled");
+
+    await registerBackgroundTaskAsync();
+    console.log("background task registered");
+  };
+
+  init();
+}, []);
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}

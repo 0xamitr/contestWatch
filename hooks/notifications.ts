@@ -36,95 +36,75 @@ export async function requestNotificationPermissions() {
 
 // 3. Schedule the Daily Memo Notification
 export async function scheduleDailyMemoNotification() {
-  // Ensure permissions are granted before scheduling
+  console.log("⏰ Scheduling daily memo notification");
+
   const permissionsGranted = await requestNotificationPermissions();
+  console.log("Permissions inside scheduler:", permissionsGranted);
+
   if (!permissionsGranted) {
-    console.warn('Cannot schedule notification: permissions not granted.');
+    console.warn("Permission not granted inside scheduler");
     return;
   }
 
   const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
-  console.log("schedules", scheduledNotifications)
-  const isDailyMemoScheduled = scheduledNotifications.some(
+  console.log("Scheduled notifications:", scheduledNotifications);
+
+  const isAlreadyScheduled = scheduledNotifications.some(
     (notification) => notification.identifier === DAILY_MEMO_NOTIFICATION_IDENTIFIER
   );
 
-  if (isDailyMemoScheduled) {
-    console.log('Daily memo notification is already scheduled. Skipping re-scheduling.');
-    return; // Exit if already scheduled
+  if (isAlreadyScheduled) {
+    console.log("Already scheduled. Skipping.");
+    return;
   }
 
-  // Clear any existing scheduled notification with this ID to prevent duplicates
-  await Notifications.cancelScheduledNotificationAsync(DAILY_MEMO_NOTIFICATION_IDENTIFIER);
-
-  // Get data from persistent storage (e.g., AsyncStorage)
+  console.log("Parsing contests from AsyncStorage...");
   let contestsToday = 0;
   try {
-    const storedData = await AsyncStorage.getItem('contests'); // Use a consistent key
+    const storedData = await AsyncStorage.getItem("contests");
     if (storedData) {
-      JSON.parse(storedData).forEach((contest:any, index:number)=>{
-        const d1 = new Date(contest.start)
-        const d2 = new Date()
-        if (d2.getHours() > 7){
+      JSON.parse(storedData).forEach((contest: any) => {
+        const d1 = new Date(contest.start);
+        const d2 = new Date();
+        if (d2.getHours() > 7) {
           d2.setDate(d2.getDate() + 1);
         }
-        if( d1.getFullYear() === d2.getFullYear() &&
-        d1.getMonth() === d2.getMonth() &&
-        d1.getDate() === d2.getDate()){
-          contestsToday += 1
+        if (
+          d1.getFullYear() === d2.getFullYear() &&
+          d1.getMonth() === d2.getMonth() &&
+          d1.getDate() === d2.getDate()
+        ) {
+          contestsToday += 1;
         }
-      })
+      });
     }
-  } catch (error) {
-    console.error('Error reading data from AsyncStorage for notification:', error);
-    contestsToday = 0;
+  } catch (err) {
+    console.error("Error reading contests:", err);
   }
 
-  // Schedule the new notification
+  console.log("Contests today:", contestsToday);
+
+  try {
   await Notifications.scheduleNotificationAsync({
     identifier: DAILY_MEMO_NOTIFICATION_IDENTIFIER,
     content: {
       title: "Your Daily Memo! 🧠",
       body: `contests_Today: ${contestsToday}`,
       data: {
-        type: 'daily_memo_reminder', // Custom data for identifying the notification
+        type: "daily_memo_reminder",
         timestamp: Date.now(),
         memoContent: contestsToday,
       },
     },
     trigger: {
+      type: 'daily',
       hour: 7,
-      minute: 0,
-      repeats: true
-    } as Notifications.CalendarTriggerInput
+      minute: 0
+    } as Notifications.DailyTriggerInput
   });
 
-  console.log('Daily memo notification scheduled for 7 AM with data:', contestsToday);
+  console.log("✅ Daily memo notification scheduled!");
+} catch (err) {
+  console.error("❌ Failed to schedule notification", err);
 }
-
-// 4. Function to save/update the memo data
-// This should also trigger a re-schedule of the notification to update its content
-export async function saveAndScheduleMemo(memoText: string) {
-  try {
-    await AsyncStorage.setItem('myDailyMemo', memoText);
-    console.log('Memo saved:', memoText);
-    // After saving, immediately re-schedule the notification to reflect the new data
-    await scheduleDailyMemoNotification();
-  } catch (error) {
-    console.error('Error saving memo to AsyncStorage:', error);
-  }
-}
-
-// 5. Function to clear all scheduled notifications (optional, for cleanup/testing)
-export async function clearAllNotifications() {
-  await Notifications.cancelAllScheduledNotificationsAsync();
-  console.log('All scheduled notifications cleared.');
-}
-
-// 6. Listener for when the user taps on a notification
-export function addNotificationTapListener(callback: (data: any) => void) {
-  return Notifications.addNotificationResponseReceivedListener(response => {
-    console.log('Notification tapped!', response);
-    callback(response.notification.request.content.data);
-  });
 }
