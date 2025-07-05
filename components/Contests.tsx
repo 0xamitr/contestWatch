@@ -11,8 +11,14 @@ type Conteststype = {
 
 export default function Contests(){
     const [contests, setContests] = useState<Conteststype[]>([])
+    const [counter, setCounter] = useState<string>("")
     useEffect(()=>{
         const init = async()=>{
+            const count = await AsyncStorage.getItem('counter')
+            if(count)
+                setCounter(count)
+            else
+                setCounter("0")
             const lastUpdated = await AsyncStorage.getItem('lastUpdated')
             let storedcontests = await AsyncStorage.getItem('contests')
             if(!lastUpdated){
@@ -33,12 +39,13 @@ export default function Contests(){
                 else 
                     setContests(storedcontests)
             }
-            console.log(storedcontests)
         }
         init()
+    
     }, [])
     return (
         <ThemedView>
+            <ThemedText>Counter: {counter}</ThemedText>
             {contests.length > 0 && contests.map((contest, index) => (
             <ThemedView key={index}>
                 <ThemedText>Title: {contest.title}</ThemedText>

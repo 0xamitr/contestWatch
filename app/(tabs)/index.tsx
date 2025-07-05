@@ -18,8 +18,8 @@ export default function HomeScreen() {
   useEffect(()=>{
     const init = async() => {
       const granted = await requestNotificationPermissions()
-      scheduleDailyMemoNotification()
-      registerBackgroundTaskAsync()
+      await scheduleDailyMemoNotification()
+      await registerBackgroundTaskAsync()
     }
     init()
   }, [])

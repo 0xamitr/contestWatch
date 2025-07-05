@@ -1,12 +1,18 @@
+import {
+  scheduleDailyMemoNotification
+} from '@/hooks/notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as BackgroundTask from 'expo-background-task';
 import * as TaskManager from 'expo-task-manager';
 import fetchContets from './fetchContests';
-
 export const TASK_NAME = 'BACKGROUND_FETCH_TASK';
 
 // ✅ Global scope — this is correct
 TaskManager.defineTask(TASK_NAME, async () => {
+  const value = await AsyncStorage.getItem('counter');
+  const current = value ? parseInt(value, 10) : 0;
+  const updated = current + 1;
+  await AsyncStorage.setItem('counter', updated.toString());
   try {
     const now = Date.now();
     console.log(`Got background task call at date: ${new Date(now).toISOString()}`);
@@ -23,6 +29,7 @@ TaskManager.defineTask(TASK_NAME, async () => {
             AsyncStorage.setItem('contests', JSON.stringify(contests))
         }
     }
+    scheduleDailyMemoNotification()
   } catch (error) {
     console.error('Failed to execute the background task:', error);
     return BackgroundTask.BackgroundTaskResult.Failed;

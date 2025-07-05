@@ -4,12 +4,20 @@ export default async function fetchContets(){
     try{
         const res = await fetch(API_URL)
         if(res.ok){
-            const contests = res.json()
+            const contests = await res.json()
             console.log(contests, "ge")
-            return contests
+            const sortedContests = contests.sort((d1:any, d2:any)=>{
+                return (new Date(d1.start).getTime() - new Date(d2.start).getTime())
+            })
+            console.log(sortedContests)
+            return sortedContests
+        }
+        else{
+            console.log("what the fuck up", res)
         }
     }
     catch(err){
+        console.log("err hey", err)
         return err
     }
 }

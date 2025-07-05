@@ -7,7 +7,6 @@ import * as Notifications from 'expo-notifications';
 // This determines how notifications behave when your app is in the foreground.
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true, // Show the notification alert
     shouldPlaySound: true, // Play a sound
     shouldSetBadge: false, // Don't modify the app badge
     shouldShowBanner: true,
@@ -44,19 +43,41 @@ export async function scheduleDailyMemoNotification() {
     return;
   }
 
+  const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
+  console.log("schedules", scheduledNotifications)
+  const isDailyMemoScheduled = scheduledNotifications.some(
+    (notification) => notification.identifier === DAILY_MEMO_NOTIFICATION_IDENTIFIER
+  );
+
+  if (isDailyMemoScheduled) {
+    console.log('Daily memo notification is already scheduled. Skipping re-scheduling.');
+    return; // Exit if already scheduled
+  }
+
   // Clear any existing scheduled notification with this ID to prevent duplicates
   await Notifications.cancelScheduledNotificationAsync(DAILY_MEMO_NOTIFICATION_IDENTIFIER);
 
   // Get data from persistent storage (e.g., AsyncStorage)
-  let dataFromMemory = 'No daily memo set yet.';
+  let contestsToday = 0;
   try {
-    const storedData = await AsyncStorage.getItem('myDailyMemo'); // Use a consistent key
+    const storedData = await AsyncStorage.getItem('contests'); // Use a consistent key
     if (storedData) {
-      dataFromMemory = storedData;
+      JSON.parse(storedData).forEach((contest:any, index:number)=>{
+        const d1 = new Date(contest.start)
+        const d2 = new Date()
+        if (d2.getHours() > 7){
+          d2.setDate(d2.getDate() + 1);
+        }
+        if( d1.getFullYear() === d2.getFullYear() &&
+        d1.getMonth() === d2.getMonth() &&
+        d1.getDate() === d2.getDate()){
+          contestsToday += 1
+        }
+      })
     }
   } catch (error) {
     console.error('Error reading data from AsyncStorage for notification:', error);
-    dataFromMemory = 'Error loading your memo.';
+    contestsToday = 0;
   }
 
   // Schedule the new notification
@@ -64,28 +85,21 @@ export async function scheduleDailyMemoNotification() {
     identifier: DAILY_MEMO_NOTIFICATION_IDENTIFIER,
     content: {
       title: "Your Daily Memo! 🧠",
-      body: `Here's what you remembered: ${dataFromMemory}`,
+      body: `contests_Today: ${contestsToday}`,
       data: {
         type: 'daily_memo_reminder', // Custom data for identifying the notification
         timestamp: Date.now(),
-        memoContent: dataFromMemory,
+        memoContent: contestsToday,
       },
     },
     trigger: {
-      channelId: 'default', // Highly recommended for Android for reliable delivery
-      // You specify the type of trigger as 'calendar' and then its properties
-      // The `type` here refers to the literal string 'calendar' for CalendarTriggerInput
-      // Make sure there are no other 'type' properties nested inside this.
-      // This is the expected structure for a CalendarTriggerInput.
-      hour: 22,
-      minute: 38,
-      repeats: true,
-      // You might also consider specifying weekdays if needed, but not for simple daily
-      // weekday: 1, // Example: Monday
-    } as Notifications.CalendarTriggerInput,
+      hour: 7,
+      minute: 0,
+      repeats: true
+    } as Notifications.CalendarTriggerInput
   });
 
-  console.log('Daily memo notification scheduled for 7 AM with data:', dataFromMemory);
+  console.log('Daily memo notification scheduled for 7 AM with data:', contestsToday);
 }
 
 // 4. Function to save/update the memo data
