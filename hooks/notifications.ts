@@ -37,7 +37,6 @@ export async function requestNotificationPermissions() {
 // 3. Schedule the Daily Memo Notification
 export async function scheduleDailyMemoNotification() {
   console.log("⏰ Scheduling daily memo notification");
-
   const permissionsGranted = await requestNotificationPermissions();
   console.log("Permissions inside scheduler:", permissionsGranted);
 
@@ -69,6 +68,7 @@ export async function scheduleDailyMemoNotification() {
         if (d2.getHours() > 7) {
           d2.setDate(d2.getDate() + 1);
         }
+        console.log("date", d2)
         if (
           d1.getFullYear() === d2.getFullYear() &&
           d1.getMonth() === d2.getMonth() &&

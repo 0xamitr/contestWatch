@@ -10,6 +10,9 @@ export default async function fetchContets(){
                 return (new Date(d1.start).getTime() - new Date(d2.start).getTime())
             })
             console.log(sortedContests)
+            sortedContests.forEach((contest:any, index:number)=>{
+                console.log("ha", contest.start)
+            })
             return sortedContests
         }
         else{
