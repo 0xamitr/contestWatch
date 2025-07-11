@@ -64,7 +64,7 @@ export async function scheduleDailyMemoNotification() {
     if (storedData) {
       JSON.parse(storedData).forEach((contest: any) => {
         const d1 = new Date(contest.start);
-        const d2 = new Date();
+        const d2 = new Date()
         if (d2.getHours() > 7) {
           d2.setDate(d2.getDate() + 1);
         }

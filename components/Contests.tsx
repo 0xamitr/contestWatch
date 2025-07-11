@@ -1,5 +1,6 @@
 import fetchContets from '@/hooks/fetchContests';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { formatInTimeZone } from 'date-fns-tz';
 import { useEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { ThemedText } from './ThemedText';
@@ -9,21 +10,15 @@ type Conteststype = {
     title: string,
     duration: number,
     start: number,
+    type: string,
 }
 
 export default function Contests(){
     const [contests, setContests] = useState<Conteststype[]>([])
-    const [counter, setCounter] = useState<string>("")
     useEffect(()=>{
         const init = async()=>{
-            AsyncStorage.clear().then(() => {
-    console.log('✅ AsyncStorage cleared');
-  });
-            const count = await AsyncStorage.getItem('counter')
-            if(count)
-                setCounter(count)
-            else
-                setCounter("0")
+            console.log(new Date(), "yp  ", new Date().getHours(), "ww")
+            console.log(new Date("2025-07-19T20:05:00+05:30"))
             const lastUpdated = await AsyncStorage.getItem('lastUpdated')
             if(lastUpdated)
                 console.log("last", (lastUpdated))
@@ -34,7 +29,8 @@ export default function Contests(){
                 AsyncStorage.setItem('contests', JSON.stringify(storedcontests))
             }
             else{
-                if(Date.now() - new Date(lastUpdated).getTime() > 1000*60*60*24){
+                console.log("Aaaa", Date.now() - (new Date(parseInt(lastUpdated, 10)).getTime()));
+                if(Date.now() - new Date(parseInt(lastUpdated, 10)).getTime() > 1000*60*60*24){
                     storedcontests = await fetchContets()
                     AsyncStorage.setItem('lastUpdated', Date.now().toString())
                     AsyncStorage.setItem('contests', JSON.stringify(storedcontests))
@@ -51,12 +47,11 @@ export default function Contests(){
     }, [])
     return (
         <ThemedView>
-            <ThemedText>Counter: {counter}</ThemedText>
             {contests.length > 0 && contests.map((contest, index) => (
             <ThemedView style={styles.contestContainer} lightColor='whie' darkColor='black' key={index}>
-                <ThemedText>Title: {contest.title}</ThemedText>
-                <ThemedText>Duration: {contest.duration}</ThemedText>
-                <ThemedText>Start: {contest.start}</ThemedText>
+                <ThemedText type='subtitle'>[{contest.type}] {contest.title}</ThemedText>
+                <ThemedText>{contest.duration} minutes</ThemedText>
+                <ThemedText>{formatInTimeZone(new Date(contest.start), 'Asia/Kolkata', 'dd MMM yyyy, hh:mm a')}</ThemedText>            
             </ThemedView>
             ))}
         </ThemedView>
@@ -67,7 +62,7 @@ const styles = StyleSheet.create({
   contestContainer: {
     borderWidth: 5,
     borderRadius: 20,
-    marginBlockEnd: 20,
+    marginBlockEnd: 10,
     padding: 10,
   },
 });

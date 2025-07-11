@@ -10,35 +10,41 @@ import {
   requestNotificationPermissions,
   scheduleDailyMemoNotification
 } from '@/hooks/notifications';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Image } from 'expo-image';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';
 
 export default function HomeScreen() {
- useEffect(() => {
-  console.log("useEffect ran");
+  const [counter, setCounter] = useState<string>("")
+  useEffect(() => {
+    console.log("useEffect ran");
+    
+    const init = async () => {
+      console.log("init started");
+      const count = await AsyncStorage.getItem('counter')
+        if(count)
+            setCounter(count)
+        else
+            setCounter("0")
 
-  const init = async () => {
-    console.log("init started");
+      const granted = await requestNotificationPermissions();
+      console.log("permissions granted:", granted);
 
-    const granted = await requestNotificationPermissions();
-    console.log("permissions granted:", granted);
+      await scheduleDailyMemoNotification();
+      console.log("notification scheduled");
 
-    await scheduleDailyMemoNotification();
-    console.log("notification scheduled");
-
-    await registerBackgroundTaskAsync();
-    console.log("background task registered");
-  };
-
-  init();
+      await registerBackgroundTaskAsync();
+      console.log("background task registered");
+    };
+    init();
 }, []);
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
       headerImage={
         <Image
-          source={require('@/assets/images/partial-react-logo.png')}
+          source={require('@/assets/images/monke.jpeg')}
           style={styles.reactLogo}
         />
       }>
@@ -46,6 +52,7 @@ export default function HomeScreen() {
         <ThemedText type="title">Welcome!</ThemedText>
         <HelloWave />
       </ThemedView>
+      <ThemedText>Counter: {counter} (ignore)</ThemedText>
       <Contests />
       <ThemedView style={styles.stepContainer}>
         
@@ -65,8 +72,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   reactLogo: {
-    height: 178,
-    width: 290,
+    height: '100%',
+    width: '100%',
     bottom: 0,
     left: 0,
     position: 'absolute',
